@@ -6,6 +6,7 @@ import com.example.userservice.models.User;
 import com.example.userservice.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -99,8 +100,11 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @GetMapping("/validate/{token}")
-    public ResponseEntity<Boolean> validateToken(@PathVariable("token") String token){
+    @PostMapping("/validate")
+    public ResponseEntity<Boolean> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+        if(token.startsWith("Bearer ")){
+            token=token.replace("Bearer ","");
+        }
         User user =userService.validateToken(token);
         if(user==null){
             return new ResponseEntity<>(false,HttpStatus.UNAUTHORIZED);

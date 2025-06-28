@@ -28,6 +28,6 @@ public class Address extends BaseModel {
     private boolean isPrimary;
     @ManyToOne
     //@JoinColumn(name = "user_id")
-    //@JsonIgnore
+    @JsonIgnore
     private User user;
 }
