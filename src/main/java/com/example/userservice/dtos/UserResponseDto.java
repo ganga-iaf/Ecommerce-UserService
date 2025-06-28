@@ -1,6 +1,9 @@
 package com.example.userservice.dtos;
 
+import com.example.userservice.models.Address;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class UserResponseDto {
@@ -9,4 +12,5 @@ public class UserResponseDto {
     private String lastName;
     private String email;
     private String mobileNumber;
+    private List<Address> addresses;
 }

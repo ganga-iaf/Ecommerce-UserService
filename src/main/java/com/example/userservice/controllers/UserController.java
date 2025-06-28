@@ -1,8 +1,7 @@
 package com.example.userservice.controllers;
 
-import com.example.userservice.dtos.CreateUserRequestDto;
-import com.example.userservice.dtos.CreateUserResponseDto;
-import com.example.userservice.dtos.UserResponseDto;
+import com.example.userservice.dtos.*;
+import com.example.userservice.models.Token;
 import com.example.userservice.models.User;
 import com.example.userservice.services.UserService;
 import jakarta.validation.Valid;
@@ -25,7 +24,7 @@ public class UserController {
 
     @Autowired
     private UserService userService;
-    @PostMapping()
+    @PostMapping("/signup")
     public ResponseEntity<CreateUserResponseDto> addUser(@RequestBody @Valid CreateUserRequestDto requestDto) {
             String firstName = requestDto.getFirstName();
             String lastName = requestDto.getLastName();
@@ -59,6 +58,7 @@ public class UserController {
         userResponseDto.setLastName(user.getLastName());
         userResponseDto.setEmail(user.getEmail());
         userResponseDto.setMobileNumber(user.getMobileNumber());
+        userResponseDto.setAddresses(user.getAddresses());
         return userResponseDto;
     }
 
@@ -84,4 +84,31 @@ public class UserController {
         responseDto.setMobileNumber(user.getMobileNumber());
         return responseDto;
     }
+
+    @PostMapping("/login")
+    public LoginResponseDto login(@RequestBody LoginRequestDto dto){
+        Token token = userService.login(dto.getUsername(), dto.getPassword());
+        LoginResponseDto responseDto=new LoginResponseDto();
+        responseDto.setToken(token.getToken());
+        return responseDto;
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto dto){
+
+    }
+
+    @GetMapping("/validate/{token}")
+    public ResponseEntity<Boolean> validateToken(@PathVariable("token") String token){
+        User user =userService.validateToken(token);
+        if(user==null){
+            return new ResponseEntity<>(false,HttpStatus.UNAUTHORIZED);
+        }
+        return new ResponseEntity<>(true,HttpStatus.OK);
+    }
+
 }
+
+
+
+

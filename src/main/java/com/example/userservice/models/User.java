@@ -1,11 +1,11 @@
 package com.example.userservice.models;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.Date;
 import java.util.List;
@@ -18,9 +18,9 @@ public class User extends BaseModel {
    private String firstName;
    @Column(name = "last_name")
    private String lastName;
-   @Column(name = "email")
+   @Column(name = "email",unique = true)
    private String email;
-   @Column(name = "mobile")
+   @Column(name = "mobile",unique = true)
    private String mobileNumber;
    @Column(name = "password")
    private String password;
@@ -28,6 +28,8 @@ public class User extends BaseModel {
    private Date dob;
    @Column(name = "is_suspended")
    private boolean isSuspended;
-   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+   @OneToMany(mappedBy = "user",fetch = FetchType.LAZY)
+   //@Fetch(FetchMode.SUBSELECT)
+   @JsonIgnore
    private List<Address> addresses;
 }

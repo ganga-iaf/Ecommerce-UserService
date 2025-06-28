@@ -1,8 +1,10 @@
 package com.example.userservice.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
 
 @Getter
 @Setter
@@ -25,6 +27,7 @@ public class Address extends BaseModel {
     @Column(name = "is_primary")
     private boolean isPrimary;
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    //@JoinColumn(name = "user_id")
+    //@JsonIgnore
     private User user;
 }
