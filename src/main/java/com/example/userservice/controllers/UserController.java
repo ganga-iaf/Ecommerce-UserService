@@ -95,7 +95,8 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto dto){
-
+        userService.logout(dto.getToken());
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/validate/{token}")

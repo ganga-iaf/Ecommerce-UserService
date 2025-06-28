@@ -90,4 +90,17 @@ public class UserServiceImpl implements UserService {
 
         return tokenEntity.getUser();
     }
+
+    @Override
+    public void logout(String token) {
+        Optional<Token> tokenOptional = tokenRepository.findByToken(token);
+        if(tokenOptional.isPresent()){
+            Token tokenEntity = tokenOptional.get();
+            tokenEntity.setExpiryAt(new Date());
+            tokenEntity.setUpdatedAt(new Date());
+            tokenRepository.save(tokenEntity);
+        }
+    }
+
+
 }

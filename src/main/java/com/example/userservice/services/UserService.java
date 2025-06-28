@@ -15,4 +15,5 @@ public interface UserService {
     Optional<User> getUserById(Long userId);
     Token login(String email, String password);
     User validateToken(String token);
+    void logout(String token);
 }
