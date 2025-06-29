@@ -1,5 +1,6 @@
 package com.example.userservice.services;
 
+import com.example.userservice.Exceptions.*;
 import com.example.userservice.dtos.CreateUserRequestDto;
 import com.example.userservice.models.Token;
 import com.example.userservice.models.User;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import javax.swing.text.html.Option;
 import java.util.*;
 
 @Service
@@ -40,10 +42,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User createUser(String firstName, String lastName, String email,String mobileNumber ,Date dob ,String password) {
+    public User createUser(String firstName, String lastName, String email,String mobileNumber ,Date dob ,String password) throws UserAlreadyExistsException {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if(userOptional.isPresent()){
-            return null;
+            throw  new UserAlreadyExistsException("User already exists with email: "+email);
         }
         User user = new User();
         user.setFirstName(firstName);
@@ -62,22 +64,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getUserById(Long userId) {
-        return userRepository.findById(userId);
+    public User getUserById(Long userId) throws UserNotFoundException {
+
+        Optional<User> userOptional=userRepository.findById(userId);
+        if(userOptional.isEmpty()){
+            throw new UserNotFoundException("User not found with id: "+userId);
+        }
+        return userOptional.get();
     }
 
     @Override
-    public Token login(String email, String password) {
+    public Token login(String email, String password) throws UserNotFoundException, IncorrectPasswordException {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if(userOptional.isEmpty()){
             //throw user not found exception
-            return null;
+            throw new UserNotFoundException("User not exist with email: "+email);
         }
         User user = userOptional.get();
-//        if(!bCryptPasswordEncoder.matches(password,user.getPassword())){
-//            //throw login failed exception
-//            return null;
-//        }
+        if(!bCryptPasswordEncoder.matches(password,user.getPassword())){
+           //throw login failed exception
+            throw new IncorrectPasswordException("");
+        }
 //        Token token = new Token();
 //        token.setUser(user);
 //        token.setToken(RandomStringUtils.random(128));
@@ -105,16 +112,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User validateToken(String token) {
+    public User validateToken(String token) throws ExpiredJWTException,InvalidTokenException {
         Claims claims;
         try{
            claims=Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
         }catch (io.jsonwebtoken.ExpiredJwtException e){
             System.out.println("token expired. "+e.getMessage());
-            return null;
+            throw new ExpiredJWTException(e);
         } catch (io.jsonwebtoken.JwtException ex){
             System.out.println("Invalid token. "+ex.getMessage());
-            return null;
+            throw new InvalidTokenException(ex);
         }
         String email=claims.getSubject();
         if(email==null||email.isEmpty()){

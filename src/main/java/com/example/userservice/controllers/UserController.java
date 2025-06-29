@@ -1,5 +1,6 @@
 package com.example.userservice.controllers;
 
+import com.example.userservice.Exceptions.*;
 import com.example.userservice.dtos.*;
 import com.example.userservice.models.Token;
 import com.example.userservice.models.User;
@@ -25,8 +26,10 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    //User might exist already
     @PostMapping("/signup")
-    public ResponseEntity<CreateUserResponseDto> addUser(@RequestBody @Valid CreateUserRequestDto requestDto) {
+    public ResponseEntity<CreateUserResponseDto> signup(@RequestBody @Valid CreateUserRequestDto requestDto) throws UserAlreadyExistsException, PasswordsNotMatchException {
             String firstName = requestDto.getFirstName();
             String lastName = requestDto.getLastName();
             String email = requestDto.getEmail();
@@ -35,7 +38,7 @@ public class UserController {
             String password = requestDto.getPassword();
             String confirmPassword = requestDto.getConfirmPassword();
             if(!password.equals(confirmPassword)){
-                return  ResponseEntity.badRequest().build();
+                throw new PasswordsNotMatchException("Password and Confirm passwords aren't matching.");
             }
             User user = userService.createUser(firstName,lastName,email,mobileNumber,dob,password);
             CreateUserResponseDto responseDto = createUserResponseDto(user);
@@ -64,16 +67,9 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("userId") Long userId) {
-        Optional<User> optionalUser=userService.getUserById(userId);
-        UserResponseDto userResponseDto=null;
-        if(optionalUser.isEmpty()){
-            MultiValueMap<String, String> multiValueMap=new LinkedMultiValueMap<>();
-            multiValueMap.add("error","User not found with id "+userId);
-            return new ResponseEntity<UserResponseDto>(userResponseDto,multiValueMap ,HttpStatus.NOT_FOUND);
-        }
-        userResponseDto=new UserResponseDto();
-        return new ResponseEntity<UserResponseDto>(from(optionalUser.get()),HttpStatus.FOUND);
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("userId") Long userId) throws UserNotFoundException {
+        User user=userService.getUserById(userId);
+        return new ResponseEntity<UserResponseDto>(from(user),HttpStatus.FOUND);
     }
 
     private CreateUserResponseDto createUserResponseDto(User user){
@@ -86,8 +82,10 @@ public class UserController {
         return responseDto;
     }
 
+
+
     @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody LoginRequestDto dto){
+    public LoginResponseDto login(@RequestBody LoginRequestDto dto) throws UserNotFoundException, IncorrectPasswordException{
         Token token = userService.login(dto.getUsername(), dto.getPassword());
         LoginResponseDto responseDto=new LoginResponseDto();
         responseDto.setToken(token.getToken());
@@ -101,7 +99,7 @@ public class UserController {
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<Boolean> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token){
+    public ResponseEntity<Boolean> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws ExpiredJWTException, InvalidTokenException {
         if(token.startsWith("Bearer ")){
             token=token.replace("Bearer ","");
         }

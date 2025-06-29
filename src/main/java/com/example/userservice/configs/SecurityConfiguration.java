@@ -14,8 +14,8 @@ public class SecurityConfiguration {
 
         http.authorizeHttpRequests((requests) -> {
                   try {
-                      requests
-                              .anyRequest().permitAll()
+                      requests.anyRequest()
+                              .permitAll()
                               .and().cors().disable().csrf().disable();
                   } catch (Exception e) {
                       throw new RuntimeException(e);
