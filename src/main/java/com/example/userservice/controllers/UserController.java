@@ -2,23 +2,17 @@ package com.example.userservice.controllers;
 
 import com.example.userservice.Exceptions.*;
 import com.example.userservice.dtos.*;
-import com.example.userservice.models.Token;
 import com.example.userservice.models.User;
 import com.example.userservice.services.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -41,8 +35,8 @@ public class UserController {
                 throw new PasswordsNotMatchException("Password and Confirm passwords aren't matching.");
             }
             User user = userService.createUser(firstName,lastName,email,mobileNumber,dob,password);
-            CreateUserResponseDto responseDto = createUserResponseDto(user);
-            return new ResponseEntity<CreateUserResponseDto>(responseDto,HttpStatus.CREATED);
+            CreateUserResponseDto responseDto = CreateUserResponseDto.from(user);
+            return new ResponseEntity<>(responseDto,HttpStatus.CREATED);
     }
 
     @GetMapping("/all")
@@ -50,66 +44,25 @@ public class UserController {
         List<User> users=userService.getAllUsers();
         List<UserResponseDto> responseDtos=new ArrayList<>();
         for(User user:users){
-            responseDtos.add(from(user));
+            responseDtos.add(UserResponseDto.from(user));
         }
-        return new ResponseEntity<List<UserResponseDto>>(responseDtos,HttpStatus.OK);
-    }
-
-    private UserResponseDto from(User user){
-        UserResponseDto userResponseDto=new UserResponseDto();
-        userResponseDto.setId(user.getId());
-        userResponseDto.setFirstName(user.getFirstName());
-        userResponseDto.setLastName(user.getLastName());
-        userResponseDto.setEmail(user.getEmail());
-        userResponseDto.setMobileNumber(user.getMobileNumber());
-        userResponseDto.setAddresses(user.getAddresses());
-        return userResponseDto;
+        return new ResponseEntity<>(responseDtos,HttpStatus.OK);
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable("userId") Long userId) throws UserNotFoundException {
         User user=userService.getUserById(userId);
-        return new ResponseEntity<UserResponseDto>(from(user),HttpStatus.FOUND);
+        return new ResponseEntity<>(UserResponseDto.from(user),HttpStatus.FOUND);
     }
 
-    private CreateUserResponseDto createUserResponseDto(User user){
-        CreateUserResponseDto responseDto = new CreateUserResponseDto();
-        responseDto.setId(user.getId());
-        responseDto.setFirstName(user.getFirstName());
-        responseDto.setLastName(user.getLastName());
-        responseDto.setEmail(user.getEmail());
-        responseDto.setMobileNumber(user.getMobileNumber());
-        return responseDto;
+    @GetMapping("/exists")
+    public ResponseEntity<UserExistanceResponseDto> checkUserExistsWithEmail(@RequestParam("email") String email){
+           boolean isExists=userService.isUserExists(email);
+           UserExistanceResponseDto responseDto=new UserExistanceResponseDto();
+           responseDto.setEmail(email);
+           responseDto.setExists(isExists);
+           return new ResponseEntity<>(responseDto,HttpStatus.OK);
     }
-
-
-
-    @PostMapping("/login")
-    public LoginResponseDto login(@RequestBody LoginRequestDto dto) throws UserNotFoundException, IncorrectPasswordException{
-        Token token = userService.login(dto.getUsername(), dto.getPassword());
-        LoginResponseDto responseDto=new LoginResponseDto();
-        responseDto.setToken(token.getToken());
-        return responseDto;
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody LogoutRequestDto dto){
-        userService.logout(dto.getToken());
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-    @PostMapping("/validate")
-    public ResponseEntity<Boolean> validateToken(@RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws ExpiredJWTException, InvalidTokenException {
-        if(token.startsWith("Bearer ")){
-            token=token.replace("Bearer ","");
-        }
-        User user =userService.validateToken(token);
-        if(user==null){
-            return new ResponseEntity<>(false,HttpStatus.UNAUTHORIZED);
-        }
-        return new ResponseEntity<>(true,HttpStatus.OK);
-    }
-
 }
 
 
