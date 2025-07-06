@@ -24,3 +24,4 @@ public class CreateUserRequestDto {
     @NotBlank(message = "Confirm password should not be empty or null")
     private String confirmPassword;
 }
+

@@ -1,8 +1,12 @@
 package com.example.userservice.services;
 
 import com.example.userservice.Exceptions.*;
+import com.example.userservice.dtos.SendEmailDto;
 import com.example.userservice.models.User;
 import com.example.userservice.repositories.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -16,11 +20,16 @@ public class UserServiceImpl implements UserService {
     //
 //    @Autowired
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    private final ObjectMapper objectMapper;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    public UserServiceImpl(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ObjectMapper objectMapper, KafkaTemplate<String, String> kafkaTemplate) {
         this.userRepository = userRepository;
         //
         //    @Autowired
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.objectMapper = objectMapper;
+        this.kafkaTemplate = kafkaTemplate;
     }
 
     @Override
@@ -37,6 +46,18 @@ public class UserServiceImpl implements UserService {
         user.setDob(dob);
         user.setPassword(bCryptPasswordEncoder.encode(password));
         user.setCreatedAt(new Date());
+
+        SendEmailDto  sendEmailDto = new SendEmailDto();
+        sendEmailDto.setTo_email(email);
+        sendEmailDto.setSubject("Welcome to Ecommerce App.");
+        sendEmailDto.setBody("Hello "+firstName+" "+lastName);
+        String sendEmailDtoStr=null;
+        try {
+            sendEmailDtoStr = objectMapper.writeValueAsString(sendEmailDto);
+        }catch (JsonProcessingException e){
+            throw new RuntimeException(e);
+        }
+        kafkaTemplate.send("send_email",sendEmailDtoStr);
         return userRepository.save(user);
     }
 
