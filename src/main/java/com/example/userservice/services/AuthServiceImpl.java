@@ -54,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
                 .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(expirationDate)
-                .setSubject(user.getEmail())
+                .setSubject(Long.toString(user.getId()))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
         Token tokenObj = new Token();
@@ -74,7 +74,7 @@ public class AuthServiceImpl implements AuthService {
             System.out.println("Invalid token. "+ex.getMessage());
             throw new InvalidTokenException(ex);
         }
-        String email=claims.getSubject();
+        String email=claims.get("email").toString();
         if(email==null||email.isEmpty()){
             return null;
         }
