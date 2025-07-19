@@ -100,5 +100,18 @@ public class UserServiceImpl implements UserService {
         return userOptional.isPresent();
     }
 
+    @Override
+    public String ResetPassword(String email, String password) throws UserNotFoundException {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if(userOptional.isEmpty()){
+            throw new UserNotFoundException("No user present with the email");
+        }
+        User user = userOptional.get();
+        user.setPassword(bCryptPasswordEncoder.encode(password));
+        user.setUpdatedAt(new Date());
+        userRepository.save(user);
+        return email;
+    }
+
 
 }

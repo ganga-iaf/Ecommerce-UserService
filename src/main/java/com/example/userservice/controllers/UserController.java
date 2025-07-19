@@ -15,13 +15,13 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/users")
+@RequestMapping("api/user")
 public class UserController {
 
     @Autowired
     private UserService userService;
 
-    //User might exist already
+    // User might exist already
     @PostMapping("/signup")
     public ResponseEntity<CreateUserResponseDto> signup(@RequestBody @Valid CreateUserRequestDto requestDto) throws UserAlreadyExistsException, PasswordsNotMatchException {
             String firstName = requestDto.getFirstName();
@@ -39,21 +39,21 @@ public class UserController {
             return new ResponseEntity<>(responseDto,HttpStatus.CREATED);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
-        List<User> users=userService.getAllUsers();
-        List<UserResponseDto> responseDtos=new ArrayList<>();
-        for(User user:users){
-            responseDtos.add(UserResponseDto.from(user));
-        }
-        return new ResponseEntity<>(responseDtos,HttpStatus.OK);
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("userId") Long userId) throws UserNotFoundException {
-        User user=userService.getUserById(userId);
-        return new ResponseEntity<>(UserResponseDto.from(user),HttpStatus.FOUND);
-    }
+//    @GetMapping("/all")
+//    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
+//        List<User> users=userService.getAllUsers();
+//        List<UserResponseDto> responseDtos=new ArrayList<>();
+//        for(User user:users){
+//            responseDtos.add(UserResponseDto.from(user));
+//        }
+//        return new ResponseEntity<>(responseDtos,HttpStatus.OK);
+//    }
+//
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<UserResponseDto> getUserById(@PathVariable("userId") Long userId) throws UserNotFoundException {
+//        User user=userService.getUserById(userId);
+//        return new ResponseEntity<>(UserResponseDto.from(user),HttpStatus.FOUND);
+//    }
 
     @GetMapping("/exists")
     public ResponseEntity<UserExistanceResponseDto> checkUserExistsWithEmail(@RequestParam("email") String email){
@@ -62,6 +62,17 @@ public class UserController {
            responseDto.setEmail(email);
            responseDto.setExists(isExists);
            return new ResponseEntity<>(responseDto,HttpStatus.OK);
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<PasswordResetResponseDto> resetPassword(@RequestBody @Valid PasswordResetRequestDto passwordResetRequestDto) throws PasswordsNotMatchException,UserNotFoundException {
+        if(!passwordResetRequestDto.getPassword().equals(passwordResetRequestDto.getConfirmPassword())){
+            throw new PasswordsNotMatchException("Password and Confirm passwords aren't matching.");
+        }
+        String email = userService.ResetPassword(passwordResetRequestDto.getEmail(),passwordResetRequestDto.getPassword());
+        PasswordResetResponseDto responseDto=new PasswordResetResponseDto();
+        responseDto.setEmail(email);
+        return new ResponseEntity<>(responseDto,HttpStatus.OK);
     }
 }
 

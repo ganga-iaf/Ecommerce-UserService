@@ -12,4 +12,5 @@ public interface UserService {
     List<User> getAllUsers();
     User getUserById(Long userId) throws UserNotFoundException;
     boolean isUserExists(String email);
+    String ResetPassword(String email, String password) throws UserNotFoundException;
 }
